@@ -214,3 +214,273 @@ void Game::getInput(){
 		}
 	}
 }
+
+void Game::updateEntities(){
+	if(player.getHP() > 0){
+		player.move();
+		draw(player.getTexture(), player.getX(), player.getY());
+	}
+	if(player.fireStatus() == true && player.getReload() == 0){
+		if(player.getAmmo() == 0){
+			player.setBulletType(normalBullet);
+		}
+		switch(player.getBulletType()){
+			case normalBullet:
+				playerBullet.setIdentity(normalBullet);
+				playerBullet.setTexture(loadTexture(normalBulletTexture));
+				playerBullet.setX(player.getX() + 50);
+				playerBullet.setY(player.getY() + 45);
+				playerBullet.setDX(playerBulletSpeed);
+				player.setReload(5);
+				Entities.bullets.push_back(playerBullet);
+				break;
+			case waveBullet:
+				playerBullet.setIdentity(waveBullet);
+				playerBullet.setTexture(loadTexture(waveBulletTexture));
+				playerBullet.setX(player.getX() + 65);
+				playerBullet.setY(player.getY() + 40);
+				playerBullet.setDX(15);
+				player.setReload(4);
+				player.updateAmmo(-1);
+				Entities.bullets.push_back(playerBullet);
+				break;
+		}
+		Mix_PlayChannel(CH_PLAYER, app.sounds[SOUND_FIRE], 0);
+	}
+
+	if(enemySpawnTimer == 0){
+		enemy = new Enemy();
+		enemy->setX(WIDTH - 80);
+		enemy->setDX(enemySpeed);
+		enemy->setTexture(loadTexture(enemyTexture));
+		enemy->setHP(gameTicks / 1000 + 5);
+		enemyBullet.setHP(1 + gameTicks / 2000);
+		enemySpawnTimer = 60;
+		srand(time(NULL));
+		if(rand() % 100 < 30){
+			cout << "Normal spawned" << endl;
+			enemy->setIdentity(ePlane);
+		}else{
+			cout << "Wave spawned" << endl;
+			enemy->setIdentity(ePlane2);
+		}
+		int y = rand() % HEIGHT;
+		while(abs(y - lastY) < 200 || y + 105 > HEIGHT){
+			y = rand() % HEIGHT;
+		}
+		lastY = y;
+		enemy->setY(y);
+		Entities.fighters.push_back(enemy);
+	}
+
+	for(auto i = Entities.bullets.begin(); i != Entities.bullets.end(); ){
+		if(i->getX() > WIDTH || i->getX() < 0 || i->getHP() <= 0){
+			i = Entities.bullets.erase(i);
+		}else{
+			switch(i->getIdentity()){
+				case waveBullet:
+					i->setDY(15 * sin(gameTicks * 0.5 * 3.14 / 5));
+					break;
+			}
+			i->move();
+			draw(i->getTexture(), i->getX(), i->getY());
+			i++;
+		}
+	}
+
+	for(auto i = Entities.fighters.begin(); i != Entities.fighters.end(); ){
+		if((*i)->getX() <= 0){
+			i = Entities.fighters.erase(i);
+		}else if((*i)->getHP() <= 0){
+			Mix_PlayChannel(CH_OTHER, app.sounds[SOUND_EXPLOSION], 0);
+			addExplosion((*i)->getX(), ((*i)->getY()));
+			int debrisCount = rand() % 4 + 1;
+			debris.setX((*i)->getX() + 40);
+			debris.setY((*i)->getY() + 40);
+			for(int j = 0; j < debrisCount; j++){
+				debris.setTexture(debrisTexture[j]);
+				debris.setDX((rand() % 2) % 2 ? 1 : -1);
+				debris.setDY((rand() % 2) % 2 ? 1 : -1);
+				Entities.debrises.push_back(debris);
+			}
+			srand(time(NULL));
+			int drop = rand() % 100;
+			if(drop < 40){
+				int type = rand() % 2;
+				switch(type){
+					case 0:
+						powerUp.setIdentity(bonusHP);
+						powerUp.setTexture(loadTexture(bonusHPTexture));
+						break;
+					case 1:
+						powerUp.setIdentity(enchanceATK);
+						powerUp.setTexture(loadTexture(enchanceAttackTexture));
+						break;
+				}
+				powerUp.setX((*i)->getX());
+				powerUp.setY((*i)->getY());
+				powerUp.setDX(rand() % 2 == 1 ? powerUpSPD : -powerUpSPD);
+				powerUp.setDY(rand() % 2 == 1 ? powerUpSPD : -powerUpSPD);
+				Entities.powerUp.push_back(powerUp);
+			}
+			score += 5 + gameTicks/500;
+			i = Entities.fighters.erase(i);
+		}else{
+			int w, h, wP, hP;
+			Enemy *p = dynamic_cast<Enemy *>(*i);
+			SDL_QueryTexture((*i)->getTexture(), NULL, NULL, &w, &h);
+			SDL_QueryTexture(player.getTexture(), NULL, NULL, &wP, &hP);
+			if(detectCollision((*i)->getX(), (*i)->getY(), w, h, player.getX(), player.getY(), wP, hP)){
+				player.updateHP(-2);
+				(*i)->updateHP(-5);
+			}
+			int num = rand() % 200;
+			p->updateTicks();
+			if(num < 5 && p->getChangeMovement() == false){
+				if(p->getIdentity() == ePlane){
+					p->setIdentity(ePlane2);
+				}else{
+					p->setIdentity(ePlane);
+				}
+				p->setChangeMovement(true);
+			}
+			if(p->getIdentity() == ePlane2){
+				p->setDY(5 * sin(p->getTIcks() * 0.5 * 3.14 / 15));
+			}else{
+				p->setDY(0);
+			}
+			(*i)->move();
+			if(p->getReload() == 0){
+				p->setReload((75 - gameTicks / 1000 < 30 ? 30 : 75 - gameTicks / 1000));
+				enemyBullet.setX((*i)->getX() - 50);
+				enemyBullet.setY((*i)->getY() + 35);
+				Entities.bullets.push_back(enemyBullet);
+			}else{
+				p->setReload(p->getReload() - 1);
+			}
+			draw((*i)->getTexture(), (*i)->getX(), (*i)->getY());
+			i++;
+		}
+	}
+	for(auto i = Entities.powerUp.begin(); i != Entities.powerUp.end(); ){
+		int powerUpW, powerUpH, playerW, playerH;
+		SDL_QueryTexture(i->getTexture(), NULL, NULL, &powerUpW, &powerUpH);
+		SDL_QueryTexture(player.getTexture(), NULL, NULL, &playerW, &playerH);
+		if(detectCollision(i->getX(), i->getY(), powerUpW, powerUpH, player.getX(), player.getY(), playerW, playerH)){
+			switch(i->getIdentity()){
+				case bonusHP:
+					player.updateHP(2);
+					break;
+				case enchanceATK:
+					player.updateAmmo(50);
+					player.setBulletType(waveBullet);
+					break;
+			}
+			score += 25;
+			i = Entities.powerUp.erase(i);
+		}else{
+			if(i->getX() <= 0){
+				i->setDX(powerUpSPD);
+			}
+			if(i->getX() >= WIDTH - powerUpW){
+				i->setDX(-powerUpSPD);
+			}
+			if(i->getY() <= 0){
+				i->setDY(powerUpSPD);
+			}
+			if(i->getY() >= HEIGHT -  powerUpH){
+				i->setDY(-powerUpSPD);
+			}
+			i->move();
+			draw(i->getTexture(), i->getX(), i->getY());
+			i++;
+		}
+	}
+
+	for(auto i = Entities.effects.begin(); i != Entities.effects.end(); ){
+		bool remove = false;
+		for(auto j = i->begin(); j != i->end(); j++){
+			if(j->getA() <= 0){
+				remove = true;
+				break;
+			}
+			SDL_SetRenderDrawBlendMode(app.renderer, SDL_BLENDMODE_ADD);
+			SDL_SetTextureBlendMode(j->getTexture(), SDL_BLENDMODE_ADD);
+			SDL_SetTextureColorMod(j->getTexture(), j->getR(), j->getG(), j->getB());
+			SDL_SetTextureAlphaMod(j->getTexture(), j->getA());
+			draw(j->getTexture(), j->getX(), j->getY());
+			j->updateA(-15);
+		}
+		if(remove){
+			i = Entities.effects.erase(i);
+		}else{
+			i++;
+		}
+	}
+
+	for(auto i = Entities.debrises.begin(); i != Entities.debrises.end();){
+		int w1, h1;
+		SDL_QueryTexture(i->getTexture(), NULL, NULL, &w1, &h1);
+		if(i->getX() <= 0 || i->getX() >= WIDTH - 20 || i->getY() <= 0 || i->getY() >= HEIGHT - 20 || i->getHP() <= 0){
+			i = Entities.debrises.erase(i);
+		}else{
+			for(auto j = Entities.fighters.begin(); j != Entities.fighters.end(); j++){
+				if((*j)->getHP() <= 0){
+					continue;
+				}
+				int w2, h2;
+				SDL_QueryTexture((*j)->getTexture(), NULL, NULL, &w2, &h2);
+				if(detectCollision(i->getX(), i->getY(), w1, h1, (*j)->getX(), (*j)->getY(), w2, h2)){
+					i->updateHP(-1);
+					(*j)->updateHP(-1);
+				}
+			}
+			int wP, hP;
+			SDL_QueryTexture(player.getTexture(), NULL, NULL, &wP, &hP);
+			if(detectCollision(i->getX(), i->getY(), w1, h1, player.getX(), player.getY(), wP, hP)){
+				player.updateHP(-1);
+				i->updateHP(-1);
+			}
+			i->move();
+			draw(i->getTexture(), i->getX(), i->getY());
+			i++;
+		}
+	}
+
+	for(auto i = Entities.bullets.begin(); i != Entities.bullets.end(); i++){
+		int w1, h1;
+		SDL_QueryTexture(i->getTexture(), NULL, NULL, &w1, &h1);
+		for(auto j = Entities.fighters.begin(); j != Entities.fighters.end(); j++){
+			if((*j)->getHP() <= 0){
+				continue;
+			}
+			int w2, h2, wP, hP;
+			SDL_QueryTexture((*j)->getTexture(), NULL, NULL, &w2, &h2);
+			SDL_QueryTexture(player.getTexture(), NULL, NULL, &wP, &hP);
+			if(detectCollision(i->getX(), i->getY(), w1, h1, (*j)->getX(), (*j)->getY(), w2, h2) && i->getDX() > 0){
+				i->updateHP(-1);
+				(*j)->updateHP(-1);
+			}
+			if(detectCollision(i->getX(), i->getY(), w1, h1, player.getX(), player.getY(), wP, hP) && i->getIdentity() == eBullet){
+				player.updateHP(-1);
+				i->updateHP(-1);
+			}
+		}
+		for(auto j = Entities.debrises.begin(); j != Entities.debrises.end(); j++){
+			if(j->getHP() <= 0){
+				continue;
+			}
+			int w2, h2;
+			SDL_QueryTexture(j->getTexture(), NULL, NULL, &w2, &h2);
+			if(detectCollision(i->getX(), i->getY(), w1, h1, j->getX(), j->getY(), w2, h2)){
+				i->updateHP(-1);
+				j->updateHP(-1);
+			}
+		}
+		if(player.getHP() <= 0 && !player.died()){
+			Mix_PlayChannel(CH_OTHER, app.sounds[SOUND_EXPLOSION], 0);
+			addExplosion(player.getX(), player.getY());
+			player.setDieStatus(true);
+		}
+	}
+}
