@@ -32,7 +32,40 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="Effect.cpp" />
+		<Unit filename="Effect.hpp" />
+		<Unit filename="Enemy.cpp" />
+		<Unit filename="Enemy.hpp" />
+		<Unit filename="Entity.cpp" />
+		<Unit filename="Entity.hpp" />
+		<Unit filename="Game.cpp" />
+		<Unit filename="Game.hpp" />
+		<Unit filename="Player.cpp" />
+		<Unit filename="defs.hpp" />
+		<Unit filename="font/myriadProRegular.ttf" />
 		<Unit filename="main.cpp" />
+		<Unit filename="pic/background.jpg" />
+		<Unit filename="pic/blueLaser.png" />
+		<Unit filename="pic/debris1.png" />
+		<Unit filename="pic/debris2.png" />
+		<Unit filename="pic/debris3.png" />
+		<Unit filename="pic/debris4.png" />
+		<Unit filename="pic/endScreen.png" />
+		<Unit filename="pic/enemyShip.png" />
+		<Unit filename="pic/explosion.png" />
+		<Unit filename="pic/health.png" />
+		<Unit filename="pic/icon.png" />
+		<Unit filename="pic/playerShip.png" />
+		<Unit filename="pic/power.png" />
+		<Unit filename="pic/redLaser.png" />
+		<Unit filename="pic/titleScreen.png" />
+		<Unit filename="pic/wave.png" />
+		<Unit filename="player.hpp" />
+		<Unit filename="sound/background.ogg" />
+		<Unit filename="sound/button.ogg" />
+		<Unit filename="sound/explosion.ogg" />
+		<Unit filename="sound/laser.ogg" />
+		<Unit filename="sound/lose.ogg" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

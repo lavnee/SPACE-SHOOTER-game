@@ -133,7 +133,7 @@ void Game::initGame(){
 		cout << "Could not initialize TTF : " << TTF_GetError() << endl;
 		exit(-1);
 	}
-	font = TTF_OpenFont("fonts/myriadProRegular.ttf", 22);
+	font = TTF_OpenFont("font/myriadProRegular.ttf", 22);
 	score = 0;
 	if(Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096) != 0){
 		cout << "Could not initialize SDL Mixer : " << Mix_GetError() << endl;
@@ -177,10 +177,10 @@ void Game::initGame(){
 
 	debris.setHP(1);
 	debris.setIdentity(shipDebris);
-	debrisTexture[0] = loadTexture("sprites/debris1.png");
-	debrisTexture[1] = loadTexture("sprites/debris2.png");
-	debrisTexture[2] = loadTexture("sprites/debris3.png");
-	debrisTexture[3] = loadTexture("sprites/debris4.png");
+	debrisTexture[0] = loadTexture("pic/debris1.png");
+	debrisTexture[1] = loadTexture("pic/debris2.png");
+	debrisTexture[2] = loadTexture("pic/debris3.png");
+	debrisTexture[3] = loadTexture("pic/debris4.png");
 
 	explosion.setTexture(loadTexture(explosionTexture));
 

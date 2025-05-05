@@ -1,0 +1,49 @@
+# depslib dependency file v1.0
+1742572786 source:c:\space shooter game\effect.cpp
+	"Effect.hpp"
+
+1742572662 c:\space shooter game\effect.hpp
+	"Entity.hpp"
+
+1742572625 c:\space shooter game\entity.hpp
+	<SDL.h>
+
+1742572883 source:c:\space shooter game\enemy.cpp
+	"Enemy.hpp"
+
+1742572867 c:\space shooter game\enemy.hpp
+	"Entity.hpp"
+
+1742572762 source:c:\space shooter game\entity.cpp
+	"Entity.hpp"
+
+1746431504 source:c:\space shooter game\main.cpp
+	"Game.hpp"
+
+1742572927 c:\space shooter game\game.hpp
+	<iostream>
+	<sstream>
+	<algorithm>
+	<cmath>
+	<vector>
+	<time.h>
+	<fstream>
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_ttf.h>
+	<SDL_mixer.h>
+	"Player.hpp"
+	"Enemy.hpp"
+	"Entity.hpp"
+	"Effect.hpp"
+	"defs.hpp"
+
+1742572837 c:\space shooter game\player.hpp
+	<SDL.h>
+	"Entity.hpp"
+
+1746431631 c:\space shooter game\defs.hpp
+
+1742572853 source:c:\space shooter game\player.cpp
+	"Player.hpp"
+
