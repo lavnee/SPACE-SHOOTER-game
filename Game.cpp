@@ -484,3 +484,115 @@ void Game::updateEntities(){
 		}
 	}
 }
+
+void Game::drawBackground(){
+	int w, h;
+	SDL_QueryTexture(app.background, NULL, NULL, &w, &h);
+	if(-w > --backgroundX){
+		backgroundX = 0;
+	}
+	draw(app.background, backgroundX, 0);
+	draw(app.background, backgroundX + w, 0);
+}
+
+void Game::addExplosion(int x, int y){
+	explosion.setX(x - 20);
+	explosion.setY(y);
+	explosion.setDX(0);
+	explosion.setDY(0);
+	std::vector <Effect> temp;
+	for(int j = 0; j < 15; j++){
+		switch(rand() % 4){
+		case 0:
+			explosion.setRGBA(255, 255, 0, 200);
+			break;
+		case 1:
+			explosion.setRGBA(255, 0, 0, 200);
+			break;
+		case 2:
+			explosion.setRGBA(255, 128, 0, 200);
+			break;
+		case 3:
+			explosion.setRGBA(255, 255, 255, 200);
+			break;
+		}
+		temp.push_back(explosion);
+	}
+	Entities.effects.push_back(temp);
+}
+
+void Game::updateHUD(){
+	healthText << "Health : " << player.getHP();
+	scoreText << "Score   : " << score;
+	hiScoreText << "High Score : " << highScore;
+	SDL_Surface *lifeSurface = TTF_RenderText_Solid(font, healthText.str().c_str(), {255, 255, 255, 0});
+	SDL_Texture *lifeTXT = SDL_CreateTextureFromSurface(app.renderer, lifeSurface);
+	SDL_Surface *scoreSurface = TTF_RenderText_Solid(font, scoreText.str().c_str(), {255, 255, 255, 0});
+	SDL_Texture *scoreTXT = SDL_CreateTextureFromSurface(app.renderer, scoreSurface);
+	SDL_Surface *hsSurface = TTF_RenderText_Solid(font, hiScoreText.str().c_str(), {255, 255, 255, 0});
+	SDL_Texture *hsTXT = SDL_CreateTextureFromSurface(app.renderer, hsSurface);
+	draw(lifeTXT, 0, 0);
+	draw(scoreTXT, 0, 20);
+	draw(hsTXT, 0, 40);
+}
+
+void Game::prepareScene(){
+	SDL_SetRenderDrawColor(app.renderer, 0, 0, 0, 255);
+	SDL_RenderClear(app.renderer);
+}
+
+void Game::updateScene(){
+	if(app.running){
+		if(enemySpawnTimer > 0){
+			enemySpawnTimer--;
+		}
+		enemyFire++;
+		if(player.getReload() > 0){
+			player.setReload(player.getReload() - 1);
+		}
+		gameTicks++;
+		healthText.str(std::string());
+		scoreText.str(std::string());
+		hiScoreText.str(std::string());
+	}
+	if(player.getHP() <= 0 && Entities.effects.empty() && app.running){
+		Entities.bullets.clear();
+		Entities.debrises.clear();
+		Entities.fighters.clear();
+		Entities.powerUp.clear();
+		app.running = false;
+		if(score > highScore){
+			highScore = score;
+			file.close();
+			file.open("scores.txt", ios::out);
+			file << highScore;
+		}
+		endScreen();
+		score = 0;
+	}
+	SDL_RenderPresent(app.renderer);
+	SDL_Delay(40);
+}
+
+SDL_Texture* Game::loadTexture(std::string path){
+	SDL_Texture* texture = IMG_LoadTexture(app.renderer, path.c_str());
+	if(texture == NULL){
+		cout << "Error loading image : " << IMG_GetError() << endl;
+		exit(-1);
+	}
+	return texture;
+}
+
+void Game::draw(SDL_Texture *texture, int x, int y){
+	SDL_Rect target;
+	target.x = x;
+	target.y = y;
+	SDL_QueryTexture(texture, NULL, NULL, &target.w, &target.h);
+	SDL_RenderCopy(app.renderer, texture, NULL, &target);
+}
+
+bool Game::detectCollision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2){
+	return (max(x1, x2) < min(x1 + w1, x2 + w2)) && (max(y1, y2) < min(y1 + h1, y2 + h2));
+}
+
+
